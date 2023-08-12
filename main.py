@@ -3,6 +3,7 @@
 import csv
 import numpy as np
 from os.path import join
+from tensorflow.keras import utils
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -42,13 +43,14 @@ def split_data(data):
 ##        labels.append(row[0]) ## not needed
     return values, labels
 
-train_corpus, _ = split_data(train_data[:train_size])
-test_corpus, _ = split_data(test_data[:test_size])
+train_corpus, _ = split_data(train_data)
+test_corpus, _ = split_data(test_data)
 
 ## Initialize tokenizer
 tokenizer = Tokenizer(oov_token=oov_token)
 tokenizer.fit_on_texts(train_corpus)
-total_words = len(tokenizer.word_index) + 1
+#total_words = 30000 ## Temprary fix, cutting on number of words.
+total_words = len(tokenizer.word_index) + 1 ## Too many words, resulting in memory error
 
 ## generate n_grams_seqs
 def generate_n_grams_seqs(corpus, n_grams):
@@ -81,11 +83,34 @@ test_input_sequences = pad_seqs(test_input_sequences, maxlen=test_max_sequence_l
 def features_and_labels(input_sequences, total_words):
     features = input_sequences[:, :-1]
     labels = input_sequences[:, -1]
-    categorical_labels = to_categorical(labels, num_classes=total_words)
+    categorical_labels = to_categorical(labels, num_classes=total_words, dtype='uint8')
 
     return features, categorical_labels
 
-train_features, train_labels = features_and_labels(train_input_sequences, total_words)
-test_features, test_labels = features_and_labels(test_input_sequences, total_words)
+'''
+create custom data generator to
+apply feature and label extraction and
+label one hot encoding
+'''
+class CustomDataGenerator(utils.Sequence):
+    # WORK IN PROGRESS
+    def __init__(self, x_set, y_set, batch_size=batch_size):
+        self.x , self.y = x_set, y_set
+        self.batch_size = batch_size
+    
+    def __len__(self):
+        return None
+    
+    def __getitem__(self, index):
+        return None
+    
+
+# train_features, train_labels = features_and_labels(train_input_sequences, total_words)
+# test_features, test_labels = features_and_labels(test_input_sequences, total_words)
+
+# print(train_features.shape, train_labels.shape)
+# print(test_features.shape, test_labels.shape)
+
+# print(train_features[:5],train_labels[:5])
 
 ## create model
